@@ -5,137 +5,202 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SunoMusic — AI Song Generator</title>
   <meta name="description" content="Turn an idea into a full song with AI. Describe it, or write your own lyrics and style." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1f1f1f" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23fa2d48'/><text x='50' y='72' font-size='62' text-anchor='middle' fill='white'>♪</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="logo">♪</span> SunoMusic</div>
-    <div class="credits" id="credits" title="Remaining SunoAPI credits">— credits</div>
-  </header>
+  <!-- ============ Sidebar ============ -->
+  <aside class="sidebar">
+    <a class="brand" href="#create"><span class="brand-mark">♪</span>SunoMusic</a>
 
-  <main class="layout">
-    <section class="panel create">
-      <h1>Make a song</h1>
-      <p class="sub">Describe an idea, or switch to Custom to write your own lyrics and style.</p>
+    <label class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="search" type="search" placeholder="Search" aria-label="Search your songs" />
+    </label>
 
-      <div class="tabs" role="tablist">
-        <button class="tab active" role="tab" data-mode="simple" aria-selected="true">Simple</button>
-        <button class="tab" role="tab" data-mode="custom" aria-selected="false">Custom</button>
+    <nav class="nav">
+      <a href="#create" data-view="create" class="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Create
+      </a>
+      <a href="#library" data-view="library">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>Library
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="credits" id="credits" title="Remaining SunoAPI credits">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.5a2 2 0 0 1 0 4H10a2 2 0 0 0 0 4h5"/></svg>
+        <span>— credits</span>
+      </div>
+      <a class="pill-btn" href="#create" id="sideCreate">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New Song
+      </a>
+    </div>
+  </aside>
+
+  <!-- ============ Main ============ -->
+  <main class="main">
+    <!-- Create view -->
+    <section class="view" id="view-create">
+      <h1 class="page-title">Create</h1>
+
+      <div class="hero-row scroller" id="heroRow"></div>
+
+      <h2 class="shelf-title" id="makeTitle">Make a Song</h2>
+      <div class="composer">
+        <div class="seg tabs" role="tablist">
+          <button class="active" role="tab" data-mode="simple" aria-selected="true">Simple</button>
+          <button role="tab" data-mode="custom" aria-selected="false">Custom</button>
+        </div>
+
+        <form id="form" novalidate>
+          <div class="simple-only">
+            <label class="field-label" for="prompt">Song description</label>
+            <textarea id="prompt" rows="4" maxlength="3000" placeholder="An upbeat summer pop song about road-tripping with friends, catchy chorus, female vocals"></textarea>
+          </div>
+
+          <div class="custom-only" hidden>
+            <div class="grid-2">
+              <div>
+                <label class="field-label" for="title">Title</label>
+                <input id="title" maxlength="80" placeholder="Midnight Drive" />
+              </div>
+              <div>
+                <label class="field-label" for="style">Style of music</label>
+                <input id="style" maxlength="1000" placeholder="synthwave, dreamy, 90 bpm" />
+              </div>
+            </div>
+            <div class="chips" id="styleChips"></div>
+
+            <div class="lyrics-head">
+              <label class="field-label" for="lyrics">Lyrics</label>
+              <button type="button" class="text-btn" id="aiLyricsBtn">Write with AI</button>
+            </div>
+            <div class="ai-lyrics" id="aiLyricsBox" hidden>
+              <input id="lyricsPrompt" maxlength="200" placeholder="What should the lyrics be about?" />
+              <button type="button" class="btn" id="aiLyricsGo"><span class="label">Generate</span></button>
+            </div>
+            <textarea id="lyrics" rows="9" maxlength="5000"></textarea>
+
+            <details class="advanced">
+              <summary>Advanced Options</summary>
+              <div class="grid-2">
+                <div>
+                  <label class="field-label" for="negativeTags">Exclude styles</label>
+                  <input id="negativeTags" maxlength="1000" placeholder="heavy metal, screaming" />
+                </div>
+                <div>
+                  <span class="field-label">Vocals</span>
+                  <div class="seg" id="vocalGender">
+                    <button type="button" data-v="" class="active">Auto</button>
+                    <button type="button" data-v="f">Female</button>
+                    <button type="button" data-v="m">Male</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="field-label" for="styleWeight">Style influence <output id="styleWeightOut">Auto</output></label>
+                  <input type="range" id="styleWeight" min="0" max="1" step="0.05" value="0.5" data-touched="0" />
+                </div>
+                <div>
+                  <label class="field-label" for="weirdness">Weirdness <output id="weirdnessOut">Auto</output></label>
+                  <input type="range" id="weirdness" min="0" max="1" step="0.05" value="0.5" data-touched="0" />
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <div class="composer-foot">
+            <label class="switch">
+              <input type="checkbox" id="instrumental" />
+              <span class="track"><span class="thumb"></span></span>
+              Instrumental
+            </label>
+            <select id="model" aria-label="Model">
+              <option value="V6">V6</option>
+              <option value="V6_MINI">V6 Mini</option>
+              <option value="V6_WILD">V6 Wild</option>
+            </select>
+            <button class="btn primary" id="createBtn" type="submit"><span class="label">Create</span></button>
+          </div>
+          <p class="error" id="error" role="alert" hidden></p>
+          <p class="hint">Two versions per request · usually ready in 1–3 minutes · listen while it finishes</p>
+        </form>
       </div>
 
-      <form id="form" novalidate>
-        <!-- Simple mode -->
-        <div class="mode simple-only">
-          <label for="prompt">Song description</label>
-          <textarea id="prompt" rows="5" maxlength="3000" placeholder="An upbeat summer pop song about road-tripping with friends, catchy chorus, female vocals"></textarea>
-          <div class="chips" id="ideaChips"></div>
-        </div>
+      <div id="recentWrap" hidden>
+        <h2 class="shelf-title"><a href="#library">Recently Created <span class="chev">›</span></a></h2>
+        <div class="shelf scroller" id="recentShelf"></div>
 
-        <!-- Custom mode -->
-        <div class="mode custom-only" hidden>
-          <label for="title">Title</label>
-          <input id="title" maxlength="80" placeholder="Midnight Drive" />
-
-          <label for="style">Style of music</label>
-          <input id="style" maxlength="1000" placeholder="synthwave, dreamy, 90 bpm, female vocals" />
-          <div class="chips" id="styleChips"></div>
-
-          <div class="lyrics-head">
-            <label for="lyrics">Lyrics</label>
-            <button type="button" class="link" id="aiLyricsBtn">✨ Write lyrics with AI</button>
-          </div>
-          <div class="ai-lyrics" id="aiLyricsBox" hidden>
-            <input id="lyricsPrompt" maxlength="200" placeholder="What should the lyrics be about?" />
-            <button type="button" class="btn small" id="aiLyricsGo">Generate</button>
-          </div>
-          <textarea id="lyrics" rows="10" maxlength="5000" placeholder="[Verse]&#10;Neon lights across the bay...&#10;&#10;[Chorus]&#10;..."></textarea>
-
-          <details class="advanced">
-            <summary>Advanced options</summary>
-            <label for="negativeTags">Exclude styles</label>
-            <input id="negativeTags" maxlength="1000" placeholder="heavy metal, screaming" />
-
-            <label>Vocal gender</label>
-            <div class="seg" id="vocalGender">
-              <button type="button" data-v="" class="active">Auto</button>
-              <button type="button" data-v="f">Female</button>
-              <button type="button" data-v="m">Male</button>
-            </div>
-
-            <label for="styleWeight">Style influence <output id="styleWeightOut">auto</output></label>
-            <input type="range" id="styleWeight" min="0" max="1" step="0.05" value="0.5" data-touched="0" />
-
-            <label for="weirdness">Weirdness <output id="weirdnessOut">auto</output></label>
-            <input type="range" id="weirdness" min="0" max="1" step="0.05" value="0.5" data-touched="0" />
-          </details>
-        </div>
-
-        <div class="row">
-          <label class="toggle">
-            <input type="checkbox" id="instrumental" />
-            <span class="track"><span class="thumb"></span></span>
-            Instrumental
-          </label>
-          <select id="model" aria-label="Model">
-            <option value="V6">Model V6 (best)</option>
-            <option value="V6_MINI">V6 Mini (faster)</option>
-            <option value="V6_WILD">V6 Wild (experimental)</option>
-          </select>
-        </div>
-
-        <p class="error" id="error" role="alert" hidden></p>
-        <button class="btn primary" id="createBtn" type="submit">
-          <span class="label">Create</span>
-        </button>
-        <p class="hint">Each request creates two variations. Generation usually takes 1–3 minutes; you can listen while it finishes.</p>
-      </form>
+        <h2 class="shelf-title">Your Songs</h2>
+        <div class="song-grid" id="songGrid"></div>
+      </div>
     </section>
 
-    <section class="panel library">
-      <div class="lib-head">
-        <h2>Your songs</h2>
-        <button class="link" id="clearBtn" hidden>Clear</button>
+    <!-- Library view -->
+    <section class="view" id="view-library" hidden>
+      <div class="title-row">
+        <h1 class="page-title">Library</h1>
+        <button class="text-btn" id="clearBtn" hidden>Clear All</button>
       </div>
-      <div id="songs" class="songs">
-        <div class="empty" id="empty">
-          <div class="empty-icon">🎧</div>
-          <p>Your generated songs will show up here.</p>
-        </div>
+      <div class="album-grid" id="libraryGrid"></div>
+      <div class="empty" id="libraryEmpty">
+        <div class="empty-art"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+        <h3 id="emptyTitle">No songs yet</h3>
+        <p id="emptyText">Songs you create will appear here.</p>
+        <a class="btn primary" href="#create">Create a Song</a>
       </div>
     </section>
   </main>
 
-  <div class="player" id="player" hidden>
-    <img id="pCover" alt="" />
-    <div class="p-meta">
-      <div class="p-title" id="pTitle"></div>
-      <div class="p-tags" id="pTags"></div>
+  <!-- ============ Floating player ============ -->
+  <div class="player" id="player" data-empty="true">
+    <div class="p-controls">
+      <button id="pPrev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M11 6 3 12l8 6zM21 6l-8 6 8 6z" fill="currentColor" stroke="none"/></svg></button>
+      <button id="pPlay" class="p-play" aria-label="Play"><svg viewBox="0 0 24 24" class="i-play"><path d="M7 4.5v15l13-7.5z" fill="currentColor" stroke="none"/></svg><svg viewBox="0 0 24 24" class="i-pause"><rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/></svg></button>
+      <button id="pNext" aria-label="Next"><svg viewBox="0 0 24 24"><path d="m13 6 8 6-8 6zM3 6l8 6-8 6z" fill="currentColor" stroke="none"/></svg></button>
     </div>
-    <audio id="audio" controls preload="none"></audio>
+    <div class="p-now">
+      <div class="p-art" id="pArt"><span class="mark">♪</span></div>
+      <div class="p-text">
+        <div class="p-title" id="pTitle">Not Playing</div>
+        <div class="p-sub" id="pSub">Create a song to start listening</div>
+        <div class="p-progress">
+          <span id="pCur">0:00</span>
+          <input type="range" id="pSeek" min="0" max="1000" value="0" aria-label="Seek" />
+          <span id="pDur">0:00</span>
+        </div>
+      </div>
+    </div>
+    <div class="p-extra">
+      <a id="pDl" aria-label="Download" download target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg></a>
+      <svg viewBox="0 0 24 24" class="vol-ic" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor" stroke="none"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>
+      <input type="range" id="pVol" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
+    </div>
+    <audio id="audio" preload="none"></audio>
   </div>
 
-  <template id="songTpl">
-    <article class="song">
-      <div class="cover">
-        <img alt="" loading="lazy" />
-        <button class="play" aria-label="Play">▶</button>
+  <!-- Mobile tab bar -->
+  <nav class="tabbar">
+    <a href="#create" data-view="create" class="active"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create</a>
+    <a href="#library" data-view="library"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>Library</a>
+  </nav>
+
+  <!-- Lyrics sheet -->
+  <dialog id="lyricsDialog">
+    <div class="sheet-head">
+      <div>
+        <div class="eyebrow">Lyrics</div>
+        <h3 id="lyricsTitle"></h3>
       </div>
-      <div class="info">
-        <div class="title"></div>
-        <div class="tags"></div>
-        <div class="meta"></div>
-      </div>
-      <div class="actions">
-        <a class="dl" download target="_blank" rel="noopener" title="Download MP3">⬇</a>
-        <button class="lyr" title="Show lyrics">≡</button>
-      </div>
-      <pre class="lyrics-view" hidden></pre>
-    </article>
-  </template>
+      <button class="icon-btn" id="lyricsClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <pre id="lyricsBody"></pre>
+  </dialog>
 
   <script src="/app.js" type="module"></script>
 </body>
