@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SunoMusic — AI Song Generator</title>
+  <meta name="description" content="Turn an idea into a full song with AI. Describe it, or write your own lyrics and style." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">♪</span> SunoMusic</div>
+    <div class="credits" id="credits" title="Remaining SunoAPI credits">— credits</div>
+  </header>
+
+  <main class="layout">
+    <section class="panel create">
+      <h1>Make a song</h1>
+      <p class="sub">Describe an idea, or switch to Custom to write your own lyrics and style.</p>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" role="tab" data-mode="simple" aria-selected="true">Simple</button>
+        <button class="tab" role="tab" data-mode="custom" aria-selected="false">Custom</button>
+      </div>
+
+      <form id="form" novalidate>
+        <!-- Simple mode -->
+        <div class="mode simple-only">
+          <label for="prompt">Song description</label>
+          <textarea id="prompt" rows="5" maxlength="3000" placeholder="An upbeat summer pop song about road-tripping with friends, catchy chorus, female vocals"></textarea>
+          <div class="chips" id="ideaChips"></div>
+        </div>
+
+        <!-- Custom mode -->
+        <div class="mode custom-only" hidden>
+          <label for="title">Title</label>
+          <input id="title" maxlength="80" placeholder="Midnight Drive" />
+
+          <label for="style">Style of music</label>
+          <input id="style" maxlength="1000" placeholder="synthwave, dreamy, 90 bpm, female vocals" />
+          <div class="chips" id="styleChips"></div>
+
+          <div class="lyrics-head">
+            <label for="lyrics">Lyrics</label>
+            <button type="button" class="link" id="aiLyricsBtn">✨ Write lyrics with AI</button>
+          </div>
+          <div class="ai-lyrics" id="aiLyricsBox" hidden>
+            <input id="lyricsPrompt" maxlength="200" placeholder="What should the lyrics be about?" />
+            <button type="button" class="btn small" id="aiLyricsGo">Generate</button>
+          </div>
+          <textarea id="lyrics" rows="10" maxlength="5000" placeholder="[Verse]&#10;Neon lights across the bay...&#10;&#10;[Chorus]&#10;..."></textarea>
+
+          <details class="advanced">
+            <summary>Advanced options</summary>
+            <label for="negativeTags">Exclude styles</label>
+            <input id="negativeTags" maxlength="1000" placeholder="heavy metal, screaming" />
+
+            <label>Vocal gender</label>
+            <div class="seg" id="vocalGender">
+              <button type="button" data-v="" class="active">Auto</button>
+              <button type="button" data-v="f">Female</button>
+              <button type="button" data-v="m">Male</button>
+            </div>
+
+            <label for="styleWeight">Style influence <output id="styleWeightOut">auto</output></label>
+            <input type="range" id="styleWeight" min="0" max="1" step="0.05" value="0.5" data-touched="0" />
+
+            <label for="weirdness">Weirdness <output id="weirdnessOut">auto</output></label>
+            <input type="range" id="weirdness" min="0" max="1" step="0.05" value="0.5" data-touched="0" />
+          </details>
+        </div>
+
+        <div class="row">
+          <label class="toggle">
+            <input type="checkbox" id="instrumental" />
+            <span class="track"><span class="thumb"></span></span>
+            Instrumental
+          </label>
+          <select id="model" aria-label="Model">
+            <option value="V6">Model V6 (best)</option>
+            <option value="V6_MINI">V6 Mini (faster)</option>
+            <option value="V6_WILD">V6 Wild (experimental)</option>
+          </select>
+        </div>
+
+        <p class="error" id="error" role="alert" hidden></p>
+        <button class="btn primary" id="createBtn" type="submit">
+          <span class="label">Create</span>
+        </button>
+        <p class="hint">Each request creates two variations. Generation usually takes 1–3 minutes; you can listen while it finishes.</p>
+      </form>
+    </section>
+
+    <section class="panel library">
+      <div class="lib-head">
+        <h2>Your songs</h2>
+        <button class="link" id="clearBtn" hidden>Clear</button>
+      </div>
+      <div id="songs" class="songs">
+        <div class="empty" id="empty">
+          <div class="empty-icon">🎧</div>
+          <p>Your generated songs will show up here.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="player" id="player" hidden>
+    <img id="pCover" alt="" />
+    <div class="p-meta">
+      <div class="p-title" id="pTitle"></div>
+      <div class="p-tags" id="pTags"></div>
+    </div>
+    <audio id="audio" controls preload="none"></audio>
+  </div>
+
+  <template id="songTpl">
+    <article class="song">
+      <div class="cover">
+        <img alt="" loading="lazy" />
+        <button class="play" aria-label="Play">▶</button>
+      </div>
+      <div class="info">
+        <div class="title"></div>
+        <div class="tags"></div>
+        <div class="meta"></div>
+      </div>
+      <div class="actions">
+        <a class="dl" download target="_blank" rel="noopener" title="Download MP3">⬇</a>
+        <button class="lyr" title="Show lyrics">≡</button>
+      </div>
+      <pre class="lyrics-view" hidden></pre>
+    </article>
+  </template>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
